@@ -43,6 +43,7 @@ function init() {
   renderer.setClearColor(0x406080);
   renderer.domElement.style.position = "absolute";
   renderer.domElement.style.top = nameHeight;
+  renderer.shadowMap.enabled = true;
   document.getElementById("canvas").appendChild(renderer.domElement);
 
   // CSSRenderer の追加
@@ -65,6 +66,7 @@ function init() {
   // 光源の作成
   const dirLight = new THREE.DirectionalLight(0xffffff, 3);
   dirLight.position.set(20, 35, 10);
+  dirLight.castShadow = true; // 光源が影を投げる
   scene.add(dirLight);
 
   const ambLight = new THREE.AmbientLight(0x404040, 20);
@@ -86,7 +88,8 @@ function init() {
   // カメラ制御
   const orbitControls = new OrbitControls(camera, cssRenderer.domElement);
   orbitControls.enableDumping = true;
-
+  orbitControls.minAzimuthAngle = -Math.PI/2;
+  orbitControls.maxAzimuthAngle = Math.PI/2;
   // ディスプレイ
   const display = new THREE.Group();
   {
@@ -122,16 +125,21 @@ function init() {
       -(std.H * Math.tan(theta))/2); 
     display.add(standBack);
     // 影の設定
+    display.children.forEach((child) => {
+      child.castShadow = true;
+      child.receiveShadow = true;
+    });
   }
   scene.add(display);
 
   // デスク
   const desk = new THREE.Mesh(
     new THREE.PlaneGeometry(10, 6),
-    new THREE.MeshBasicMaterial({color: 0xB08030})
+    new THREE.MeshLambertMaterial({color: 0xB08030})
   );
   desk.rotation.x = -Math.PI / 2;
   desk.position.y = -(dpy.H/4 + std.H + std.T/2);
+  desk.receiveShadow = true;
   scene.add(desk);
 
   // 描画関数の定義
@@ -150,11 +158,7 @@ function init() {
 
   // サイズ変更
   window.addEventListener("resize", () => {
-    canvasHeight = window.innerHeight-nameHeight;
-    canvasWidth = window.innerWidth;
-    camera.updateProjectionMatrix();
-    render.setSize(canvasWidth, canvasHeight);
-    cssRenderer.setSize(canvasWidth,canvasHeight);
+    
   });
   
   // GUIコントローラ
